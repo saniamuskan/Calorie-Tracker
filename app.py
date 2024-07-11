@@ -33,7 +33,7 @@ def add_food():
     query = data['query']
 
     api_url = f'https://api.calorieninjas.com/v1/nutrition?query={query}'
-    response = requests.get(api_url, headers={'X-Api-Key': '9/hMSxemNd16bneLeTei8Q==LNxmuVFBNqirgDgO'})
+    response = requests.get(api_url, headers={'X-Api-Key': 'YOUR_API_KEY'})
     
     if response.status_code == requests.codes.ok:
         food_data = response.json()["items"][0]
