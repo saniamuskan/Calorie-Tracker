@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+         body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-image: url("C:\\Users\\lenovo\\OneDrive\\Desktop\\project\\templates\\healthyfood.jpeg") no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    margin: 20px 0;
+    color: #ffffff;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+    font-size: 2.5em;
+}
+
+div {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    margin: 10px;
+    cursor: pointer;
+    border-radius: 25px;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    font-size: 1.1em;
+}
+
+button:hover {
+    background-color: #c0392b;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+}
+
+#set-goals, #add-food, #progress {
+    width: 85%;
+    margin: 20px auto;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+input, select {
+    width: calc(50% - 22px);
+    padding: 12px;
+    margin: 10px 5px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 1em;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus, select:focus {
+    border-color: #e74c3c;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+}
+
+.food-list {
+    margin-top: 30px;
+}
+
+.food-list h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.5em;
+}
+
+.food-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.food-list ul li {
+    margin-bottom: 8px;
+    padding: 12px;
+    background-color: #f4f4f9;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    font-size: 1.1em;
+}
+
+.food-list ul li:hover {
+    background-color: #ecf0f1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+canvas {
+    margin-top: 25px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.progress {
+    margin-top: 30px;
+}
+
+.progress h3 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.5em;
+}
+
+.progress p {
+    margin: 8px 0;
+    font-weight: bold;
+    font-size: 1.1em;
+    display: flex;
+    justify-content: space-between;
+}
+
+.progress span {
+    font-weight: normal;
+    color: #3498db;
+}
+
+#protein-percentage {
+    color: #1abc9c;
+}
+
+#fat-percentage {
+    color: #e67e22;
+}
+
+#carbs-percentage {
+    color: #9b59b6;
+}
+    </style>
+</head>
+<body background="/static/healthyfood.jpeg">
+    <h1>Food Tracker</h1>
+    <div>
+        <button onclick="showSetGoals()">Set Goals</button>
+        <button onclick="showAddFood()">Add a new food</button>
+        <button onclick="visualizeProgress()">Visualize progress</button>
+    </div>
+
+    <div id="set-goals" style="display:none;">
+        <h2>Set Your Goals</h2>
+        <input type="number" id="height" placeholder="Height (cm)">
+        <input type="number" id="weight" placeholder="Weight (kg)">
+        <input type="number" id="age" placeholder="Age">
+        <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select>
+        <button onclick="setGoals()">Set Goals</button>
+    </div>
+
+    <div id="add-food" style="display:none;">
+        <h2>Add a new food</h2>
+        <input type="text" id="food-name" placeholder="Food name">
+        <button onclick="addFood()">Add Food</button>
+    </div>
+
+    <div id="progress" style="display:none;">
+        <h2>Progress</h2>
+        <div class="food-list">
+            <h3>Foods Consumed</h3>
+            <ul id="food-list"></ul>
+        </div>
+        <canvas id="macronutrientsChart"></canvas>
+        <canvas id="caloriesChart"></canvas>
+        <div class="progress">
+            <h3>Micronutrient Progress</h3>
+            <p>Proteins: <span id="protein-percentage">0</span>%</p>
+            <p>Fats: <span id="fat-percentage">0</span>%</p>
+            <p>Carbs: <span id="carbs-percentage">0</span>%</p>
+        </div>
+    </div>
+
+    <script>
+        let macronutrientsChart = null;
+        let caloriesChart = null;
+
+        function showSetGoals() {
+            document.getElementById('set-goals').style.display = 'block';
+            document.getElementById('add-food').style.display = 'none';
+            document.getElementById('progress').style.display = 'none';
+        }
+
+        function showAddFood() {
+            document.getElementById('set-goals').style.display = 'none';
+            document.getElementById('add-food').style.display = 'block';
+            document.getElementById('progress').style.display = 'none';
+        }
+
+        function visualizeProgress() {
+            document.getElementById('set-goals').style.display = 'none';
+            document.getElementById('add-food').style.display = 'none';
+            document.getElementById('progress').style.display = 'block';
+            fetch('/get_progress')
+                .then(response => response.json())
+                .then(data => {
+                    displayProgress(data);
+                });
+        }
+
+        function setGoals() {
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const age = document.getElementById('age').value;
+            const gender = document.getElementById('gender').value;
+
+            fetch('/set_goals', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ height, weight, age, gender })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(`Goals set! Calorie Goal: ${data.calorie_goal.toFixed(2)}, Protein Goal: ${data.protein_goal.toFixed(2)}, Fat Goal: ${data.fat_goal.toFixed(2)}, Carbs Goal: ${data.carbs_goal.toFixed(2)}`);
+            });
+        }
+
+        function addFood() {
+            const foodName = document.getElementById('food-name').value;
+            fetch('/add_food', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: foodName })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`Error: ${data.message}`);
+                } else {
+                    alert(data.message);
+                    document.getElementById('food-name').value = '';  // Clear input field
+                    visualizeProgress();  // Update progress after adding food
+                }
+            });
+        }
+
+        function displayProgress(data) {
+            const foodList = document.getElementById('food-list');
+            foodList.innerHTML = '';
+            data.foods.forEach(food => {
+                const li = document.createElement('li');
+                li.textContent = `${food.name} - Calories: ${food.calories}, Proteins: ${food.proteins}, Fats: ${food.fat}, Carbs: ${food.carbs}`;
+                foodList.appendChild(li);
+            });
+
+            document.getElementById('protein-percentage').textContent = data.protein_percentage.toFixed(2);
+            document.getElementById('fat-percentage').textContent = data.fat_percentage.toFixed(2);
+            document.getElementById('carbs-percentage').textContent = data.carbs_percentage.toFixed(2);
+
+            if (macronutrientsChart) {
+                macronutrientsChart.destroy();
+            }
+            if (caloriesChart) {
+                caloriesChart.destroy();
+            }
+
+            const macronutrientsChartCtx = document.getElementById('macronutrientsChart').getContext('2d');
+            const caloriesChartCtx = document.getElementById('caloriesChart').getContext('2d');
+
+            const macronutrientsData = {
+                labels: ['Proteins', 'Fats', 'Carbs'],
+                datasets: [
+                    {
+                        label: 'Consumed',
+                        data: [data.proteins, data.fats, data.carbs],
+                        backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 99, 132, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+                        borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)', 'rgba(255, 206, 86, 1)'],
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Goals',
+                        data: [data.protein_goal, data.fat_goal, data.carbs_goal],
+                        backgroundColor: ['rgba(54, 162, 235, 0.2)', 'rgba(255, 159, 64, 0.2)', 'rgba(153, 102, 255, 0.2)'],
+                        borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)', 'rgba(153, 102, 255, 1)'],
+                        borderWidth: 1
+                    }
+                ]
+            };
+
+            macronutrientsChart = new Chart(macronutrientsChartCtx, {
+                type: 'bar',
+                data: macronutrientsData,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const caloriesData = {
+                labels: ['Calories Consumed', 'Calories Remaining'],
+                datasets: [
+                    {
+                        data: [data.calories, data.calorie_goal - data.calories],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }
+                ]
+            };
+
+            caloriesChart = new Chart(caloriesChartCtx, {
+                type: 'pie',
+                data: caloriesData
+            });
+
+            if (data.calories > data.calorie_goal) {
+                alert('Warning: You have exceeded your calorie goal!');
+            }
+            if (data.carbs > data.carbs_goal) {
+                alert('Warning: You have exceeded your carbs goal!');
+            }
+        }
+    </script>
+</body>
+</html>
